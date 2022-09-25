@@ -2,6 +2,7 @@ package application;
 
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Pos;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -23,8 +24,6 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.control.cell.TextFieldTableCell;
-import javafx.scene.control.skin.TableHeaderRow;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
@@ -88,6 +87,12 @@ public class FXController {
     @FXML
     private ChoiceBox<String> cbInitialState;
     
+    @FXML
+    private Button btnAddMealyState;
+
+    @FXML
+    private Button btnAddMooreState;
+    
     private ObservableList<InputSymbol> inputSymbols;
     
     private ObservableList<OutputSymbol> outputSymbols;
@@ -118,8 +123,14 @@ public class FXController {
     	}
     }
 
-	@FXML
 	public void createMealyTable() throws IOException {
+		btnAddMealyState.setDisable(false);
+		btnAddMealyState.setVisible(true);
+		lbTableTitle.setText("Mealy Automaton");
+		lbTableTitle.setMaxWidth(Double.MAX_VALUE);
+		AnchorPane.setLeftAnchor(lbTableTitle, 0.0);
+		AnchorPane.setRightAnchor(lbTableTitle, 0.0);
+		lbTableTitle.setAlignment(Pos.CENTER);
 		List<TableColumn<State, String>> tables = new ArrayList<>();
 		tables.add(new TableColumn<State, String>("State"));
 		tables.get(0).setCellValueFactory(new PropertyValueFactory<State,String>("name"));
@@ -138,6 +149,36 @@ public class FXController {
         tvAutomatonTable.setItems(states);
 	}
 	
+	public void createMooreTable() {
+		btnAddMooreState.setDisable(false);
+		btnAddMooreState.setVisible(true);
+		lbTableTitle.setText("Moore Automaton");
+		lbTableTitle.setMaxWidth(Double.MAX_VALUE);
+		AnchorPane.setLeftAnchor(lbTableTitle, 0.0);
+		AnchorPane.setRightAnchor(lbTableTitle, 0.0);
+		lbTableTitle.setAlignment(Pos.CENTER);
+		
+		List<TableColumn<State, String>> tables = new ArrayList<>();
+		tables.add(new TableColumn<State, String>("State"));
+		tables.get(0).setCellValueFactory(new PropertyValueFactory<State,String>("name"));
+		
+		for(int i = 0; i < inputSymbols.size(); i++) {
+			tables.add(new TableColumn<State, String>(inputSymbols.get(i).getSymbol()));
+			TableColumn<State, TextField> tempState = new TableColumn<State, TextField>("State");
+			tempState.setCellValueFactory(createArrayValueFactory(State::getOutputStates, i));
+			tables.get(i+1).getColumns().addAll(tempState);
+		}
+		
+		tables.add(new TableColumn<State, String>(""));
+		TableColumn<State, ChoiceBox<String>> tempOutput = new TableColumn<State, ChoiceBox<String>>("Output");
+		tempOutput.setCellValueFactory(createArrayValueFactory(State::getOutputSymbols, 0));
+		tables.get(tables.size()-1).getColumns().addAll(tempOutput);
+		
+		ObservableList<TableColumn<State, String>> observableList = FXCollections.observableArrayList(tables);
+        tvAutomatonTable.getColumns().addAll(observableList);
+        tvAutomatonTable.setItems(states);
+	}
+	
 	@FXML
 	public void loadTable(ActionEvent event) throws IOException {
 		if(inputSymbols.size() == 0) {
@@ -148,7 +189,14 @@ public class FXController {
 			FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("table.fxml"));
 			fxmlLoader.setController(this);
 			Parent managerPane = fxmlLoader.load();
-			createMealyTable();
+			switch(automatonSelected.getValue()) {
+				case "Mealy":
+					createMealyTable();
+					break;
+				case "Moore":
+					createMooreTable();
+					break;
+			}
 			mainPanel.setCenter(managerPane);
 		}
 	}
@@ -253,14 +301,31 @@ public class FXController {
     }
     
     @FXML
-    void addState(ActionEvent event) {
+    void addMealyState(ActionEvent event) {
+    	addState(1);
+    }
+
+    @FXML
+    void addMoreState(ActionEvent event) {
+    	addState(2);
+    }
+    
+    private void addState(int typeOfAutomaton) {
     	String tempState = txStateToAdd.getText().toUpperCase();
     	if(isEmpty(tempState)) {
     		showWarningAlert(null, null, "The text field is empty. Enter one state");
     	}else if(checkIfStateExists(tempState)) {
     		showWarningAlert(null, null, "The state with name " + tempState + " already exists");
     	}else {
-    		states.add(new State(tempState, inputSymbols.size(), outputSymbols));
+    		switch(typeOfAutomaton) {
+    			case 1:
+    				states.add(new State(true, tempState, inputSymbols.size(), outputSymbols));
+    				break;
+    			case 2:
+    				states.add(new State(false, tempState, inputSymbols.size(), outputSymbols));
+    				break;
+    		}
+    		
     		cbInitialState.getItems().add(tempState);
     	}
     	txStateToAdd.clear();
@@ -354,7 +419,6 @@ public class FXController {
     
     @FXML
     void findMinimalEquivalentAutomata(ActionEvent event) {
-    	System.out.println();
     	if(states.size() == 0) {
     		showWarningAlert(null, null, "Enter at least one state");
     	}else if(cbInitialState.getValue() == null) {
@@ -387,7 +451,7 @@ public class FXController {
         				}
         			}
         			if(!find) {
-        				msg = "The state " + outputStates[j].getText() + " does not exist";
+        				msg = "The state " + outputStates[j].getText().toUpperCase() + " does not exist";
         				stop = true;
         			}
     			}
@@ -425,24 +489,26 @@ public class FXController {
     	private TextField[] outputStates;
     	private ChoiceBox<String>[] outputSymbols;
     	
-    	private State(String name, int numOfInputSymbols, ObservableList<OutputSymbol> outputSymbolsP) {
+    	private State(boolean isMealy, String name, int numOfInputSymbols, ObservableList<OutputSymbol> outputSymbolsP) {
     		this.name = new SimpleStringProperty(name);
     		outputStates = new TextField[numOfInputSymbols];
-    		outputSymbols = new ChoiceBox[numOfInputSymbols];
+    		if(isMealy) {
+    			outputSymbols = new ChoiceBox[numOfInputSymbols];
+    		}else {
+    			outputSymbols = new ChoiceBox[1];
+    		}
     		
 			for(int i = 0; i < numOfInputSymbols; i++) { 
 				outputStates[i] = new TextField(); 
-				ChoiceBox<String> tempOutputSym = new ChoiceBox<>();
+			}
+			for(int i = 0; i < outputSymbols.length; i++) {
 				ChoiceBox<String> tempOutputCB = new ChoiceBox<>();
-				for(int j = 0; j < numOfInputSymbols; j++) {
+				for(int j = 0; j < outputSymbolsP.size(); j++) {
 					tempOutputCB.getItems().add(outputSymbolsP.get(j).getSymbol());
 				}
 				tempOutputCB.setValue(outputSymbolsP.get(0).getSymbol());
 				outputSymbols[i] = tempOutputCB;
-			}
-			
-			
-			
+			}	
     	}
     	
     	public String getName() {
