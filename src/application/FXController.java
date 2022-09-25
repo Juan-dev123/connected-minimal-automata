@@ -84,6 +84,9 @@ public class FXController {
     
     @FXML
     private TextField txStateToAdd;
+
+    @FXML
+    private ChoiceBox<String> cbInitialState;
     
     private ObservableList<InputSymbol> inputSymbols;
     
@@ -128,9 +131,6 @@ public class FXController {
 			tempOutput.setCellValueFactory(createArrayValueFactory(State::getOutputSymbols, i));
 			tables.get(i+1).getColumns().addAll(tempState, tempOutput);
 		}
-		
-		//colInputSymbols.setCellValueFactory(new PropertyValueFactory<InputSymbol,String>("symbol"));
-		//tvInputSymbols.setItems(inputSymbols);
 		
 		ObservableList<TableColumn<State, String>> observableList = FXCollections.observableArrayList(tables);
         
@@ -222,6 +222,8 @@ public class FXController {
 
     @FXML
     void backToCreateTable(ActionEvent event) throws IOException {
+    	List<State> listStates = new ArrayList<State>();
+    	states = FXCollections.observableArrayList(listStates); 
     	loadCreateTable();
     }
 
@@ -251,23 +253,35 @@ public class FXController {
     }
     
     @FXML
-    void addStatus(ActionEvent event) {
-    	states.add(new State(txStateToAdd.getText(), outputSymbols));
+    void addState(ActionEvent event) {
+    	String tempState = txStateToAdd.getText().toUpperCase();
+    	if(isEmpty(tempState)) {
+    		showWarningAlert(null, null, "The text field is empty. Enter one state");
+    	}else if(checkIfStateExists(tempState)) {
+    		showWarningAlert(null, null, "The state with name " + tempState + " already exists");
+    	}else {
+    		states.add(new State(tempState, inputSymbols.size(), outputSymbols));
+    		cbInitialState.getItems().add(tempState);
+    	}
     	txStateToAdd.clear();
-    	
-		/*
-		 * for(int i = 0; i < states.size(); i++) { for(int j = 0; j <
-		 * states.get(i).getOutputStates().length; j++) {
-		 * System.out.println(states.get(i).getOutputStates()[j].getText()); }
-		 * 
-		 * }
-		 */
+    }
+    
+    private boolean checkIfStateExists(String nameOfState) {
+    	boolean exists = false;
+    	for(int i = 0; i < states.size() && !exists; i++) {
+    		if(states.get(i).getName().equals(nameOfState)) {
+    			exists = true;
+    		}
+    	}
+    	return exists;
     }
     
     @FXML
     void addInputSymbol(ActionEvent event) {
     	String tempSymbol = tfInputSymbol.getText();
-    	if(checkSymbolExists(1, tempSymbol)) {
+    	if(isEmpty(tempSymbol)) {
+    		showWarningAlert(null, null, "The text field is empty. Enter one input symbol");
+    	}else if(checkIfSymbolExists(1, tempSymbol)) {
     		showWarningAlert(null, null, "The input symbol " + tempSymbol + " already exists");
     	}else {
     		inputSymbols.add(new InputSymbol(tempSymbol));
@@ -278,7 +292,9 @@ public class FXController {
     @FXML
     void addOutputSymbol(ActionEvent event) {
     	String tempSymbol = tfOutputSymbol.getText();
-    	if(checkSymbolExists(2, tempSymbol)) {
+    	if(isEmpty(tempSymbol)) {
+    		showWarningAlert(null, null, "The text field is empty. Enter one output symbol");
+    	}else if(checkIfSymbolExists(2, tempSymbol)) {
     		showWarningAlert(null, null, "The input symbol " + tempSymbol + " already exists");
     	}else {
     		outputSymbols.add(new OutputSymbol(tempSymbol));
@@ -286,7 +302,7 @@ public class FXController {
     	tfOutputSymbol.clear();
     }
     
-    private boolean checkSymbolExists(int typeSymbol, String symbol) {
+    private boolean checkIfSymbolExists(int typeSymbol, String symbol) {
     	boolean exists = false;
     	switch(typeSymbol) {
 	    	case 1:
@@ -305,6 +321,14 @@ public class FXController {
 	    		break;
     	}
     	return exists;
+    }
+    
+    private boolean isEmpty(String tf) {
+    	boolean isEmpty = false;
+    	if(tf.equals("")) {
+    		isEmpty = true;
+    	}
+    	return isEmpty;
     }
     
 
@@ -330,7 +354,46 @@ public class FXController {
     
     @FXML
     void findMinimalEquivalentAutomata(ActionEvent event) {
-
+    	System.out.println();
+    	if(states.size() == 0) {
+    		showWarningAlert(null, null, "Enter at least one state");
+    	}else if(cbInitialState.getValue() == null) {
+    		showWarningAlert(null, null, "Enter the initial state");
+    	}else {
+    		String msg = checkOutputStates();
+        	if(msg != null) {
+        		showWarningAlert(null, null, msg);
+        	}else {
+        		
+        	}
+    	}
+    	
+    }
+    
+    private String checkOutputStates() {
+    	String msg = null;
+    	boolean stop = false;
+    	for(int i = 0; i < states.size() && !stop; i++) {
+    		TextField[] outputStates = states.get(i).getOutputStates();
+    		for(int j = 0; j < outputStates.length && !stop; j++) {
+    			if(outputStates[j].getText().equals("")) {
+    				stop = true;
+    				msg = "There is at least one empty text field. Please fill them all";
+    			}else {
+    				boolean find = false;
+        			for(int k = 0; k < states.size() && !find; k++) {
+        				if(outputStates[j].getText().toUpperCase().equals(states.get(k).getName())) {
+        					find = true;
+        				}
+        			}
+        			if(!find) {
+        				msg = "The state " + outputStates[j].getText() + " does not exist";
+        				stop = true;
+        			}
+    			}
+    		}
+    	}
+    	return msg;
     }
     
     public static class InputSymbol{
@@ -362,17 +425,19 @@ public class FXController {
     	private TextField[] outputStates;
     	private ChoiceBox<String>[] outputSymbols;
     	
-    	private State(String name, ObservableList<OutputSymbol> inputSymbols) {
-    		int numOfInputSymbols = inputSymbols.size();
+    	private State(String name, int numOfInputSymbols, ObservableList<OutputSymbol> outputSymbolsP) {
     		this.name = new SimpleStringProperty(name);
     		outputStates = new TextField[numOfInputSymbols];
     		outputSymbols = new ChoiceBox[numOfInputSymbols];
+    		
 			for(int i = 0; i < numOfInputSymbols; i++) { 
 				outputStates[i] = new TextField(); 
+				ChoiceBox<String> tempOutputSym = new ChoiceBox<>();
 				ChoiceBox<String> tempOutputCB = new ChoiceBox<>();
 				for(int j = 0; j < numOfInputSymbols; j++) {
-					tempOutputCB.getItems().add(inputSymbols.get(j).getSymbol());
+					tempOutputCB.getItems().add(outputSymbolsP.get(j).getSymbol());
 				}
+				tempOutputCB.setValue(outputSymbolsP.get(0).getSymbol());
 				outputSymbols[i] = tempOutputCB;
 			}
 			
@@ -403,4 +468,5 @@ public class FXController {
             return array == null || array.length <= index ? null : new SimpleObjectProperty<>(array[index]);
         };
     }
+
 }
