@@ -28,6 +28,8 @@ import javafx.scene.control.Alert.AlertType;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.util.Callback;
+import model.FiniteStateAutomaton;
+import model.Moore;
 
 public class FXController {
 	@FXML
@@ -93,11 +95,19 @@ public class FXController {
     @FXML
     private Button btnAddMooreState;
     
+    @FXML
+    private Button btnFindMealyAutomata;
+
+    @FXML
+    private Button btnFindMooreAutomata;
+    
     private ObservableList<InputSymbol> inputSymbols;
     
     private ObservableList<OutputSymbol> outputSymbols;
     
     private ObservableList<State> states;
+    
+    private FiniteStateAutomaton automaton;
 	
 	public FXController() {
 		List<InputSymbol> listIS = new ArrayList<InputSymbol>();
@@ -126,6 +136,8 @@ public class FXController {
 	public void createMealyTable() throws IOException {
 		btnAddMealyState.setDisable(false);
 		btnAddMealyState.setVisible(true);
+		btnFindMealyAutomata.setDisable(false);
+		btnFindMealyAutomata.setVisible(true);
 		lbTableTitle.setText("Mealy Automaton");
 		lbTableTitle.setMaxWidth(Double.MAX_VALUE);
 		AnchorPane.setLeftAnchor(lbTableTitle, 0.0);
@@ -152,6 +164,8 @@ public class FXController {
 	public void createMooreTable() {
 		btnAddMooreState.setDisable(false);
 		btnAddMooreState.setVisible(true);
+		btnFindMooreAutomata.setDisable(false);
+		btnFindMooreAutomata.setVisible(true);
 		lbTableTitle.setText("Moore Automaton");
 		lbTableTitle.setMaxWidth(Double.MAX_VALUE);
 		AnchorPane.setLeftAnchor(lbTableTitle, 0.0);
@@ -314,7 +328,7 @@ public class FXController {
     	String tempState = txStateToAdd.getText().toUpperCase();
     	if(isEmpty(tempState)) {
     		showWarningAlert(null, null, "The text field is empty. Enter one state");
-    	}else if(checkIfStateExists(tempState)) {
+    	}else if(checkIfStateExists(tempState) != -1) {
     		showWarningAlert(null, null, "The state with name " + tempState + " already exists");
     	}else {
     		switch(typeOfAutomaton) {
@@ -331,14 +345,14 @@ public class FXController {
     	txStateToAdd.clear();
     }
     
-    private boolean checkIfStateExists(String nameOfState) {
-    	boolean exists = false;
-    	for(int i = 0; i < states.size() && !exists; i++) {
+    private int checkIfStateExists(String nameOfState) {
+    	int index = -1;
+    	for(int i = 0; i < states.size() && index == -1; i++) {
     		if(states.get(i).getName().equals(nameOfState)) {
-    			exists = true;
+    			index = i;
     		}
     	}
-    	return exists;
+    	return index;
     }
     
     @FXML
@@ -417,8 +431,18 @@ public class FXController {
         );
     }
     
+
     @FXML
-    void findMinimalEquivalentAutomata(ActionEvent event) {
+    void findMealyAutomata(ActionEvent event) {
+    	findMinimalEquivalentAutomata(1);
+    }
+
+    @FXML
+    void findMooreAutomata(ActionEvent event) {
+    	findMinimalEquivalentAutomata(2);
+    }
+    
+    void findMinimalEquivalentAutomata(int typeAutomaton) {
     	if(states.size() == 0) {
     		showWarningAlert(null, null, "Enter at least one state");
     	}else if(cbInitialState.getValue() == null) {
@@ -428,10 +452,79 @@ public class FXController {
         	if(msg != null) {
         		showWarningAlert(null, null, msg);
         	}else {
-        		
+        		reorganizeState(cbInitialState.getValue());
+        		String[] allStates = getStates();
+        		String[] allInputSymbols = getInputSymbols();
+        		for(int i = 0; i < allInputSymbols.length; i++) {
+        			System.out.println(inputSymbols.get(i).getSymbol());
+            	}
+        		System.out.println();
+        		String[] allOutputSymbols = getOutputSymbols();
+        		switch(typeAutomaton) {
+        			case 1:
+        				break;
+        			case 2:
+        				automaton = new Moore(allStates, allInputSymbols, allOutputSymbols, createDataForMoore());
+        				break;
+        		}
         	}
     	}
     	
+    }
+    
+    private void reorganizeState(String initialState) {
+    	boolean stop = false;
+    	for(int i = 0; i < states.size() && !stop; i++) {
+    		if(states.get(i).getName().equals(initialState)) {
+    			State tempState = states.get(0);
+    			states.set(0, states.get(i));
+    			states.set(i, tempState);
+    		} 
+    	}
+    }
+    
+    private String[] getStates() {
+    	String[] allStates = new String[states.size()];
+    	for(int i = 0; i < allStates.length; i++) {
+    		allStates[i] = states.get(i).getName();
+    	}
+    	return allStates;
+    }
+    
+    private String[] getInputSymbols() {
+    	String[] allInputSymbols = new String[inputSymbols.size()];
+    	for(int i = 0; i < allInputSymbols.length; i++) {
+    		allInputSymbols[i] = inputSymbols.get(i).getSymbol();
+    	}
+    	return allInputSymbols;
+    }
+    
+    private String[] getOutputSymbols() {
+    	String[] allOutputSymbols = new String[outputSymbols.size()];
+    	for(int i = 0; i < allOutputSymbols.length; i++) {
+    		allOutputSymbols[i] = outputSymbols.get(i).getSymbol();
+    	}
+    	return allOutputSymbols;
+    }
+    
+    private String[][] createDataForMoore(){
+    	String[][] data = new String[states.size()][(inputSymbols.size()*2)+2];
+    	for(int i = 0; i < states.size(); i++) {
+    		State tempState = states.get(i);
+    		String[] inputSymAndSta = new String[inputSymbols.size()*2];
+    		for(int j = 0, k = 0; j < inputSymAndSta.length; j=j+2, k++) {
+    			inputSymAndSta[j] = inputSymbols.get(j).getSymbol();
+    			inputSymAndSta[j+1] = String.valueOf(checkIfStateExists(tempState.getOutputStates()[k].getText()));
+    		}
+    		String[] row = new String[(inputSymbols.size()*2)+2];
+    		row[0] = String.valueOf(i);
+    		for(int j = 1; j <= inputSymAndSta.length; j++) {
+    			row[j] = inputSymAndSta[j-1];
+    		}
+    		row[row.length-1] = tempState.getOutputStates()[0].getText();
+    		data[i] = row;
+    	}
+    	return data;
     }
     
     private String checkOutputStates() {
