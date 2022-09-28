@@ -25,7 +25,7 @@ public class Main extends Application {
 		Parent root;
 		try {
 			root = fxmlLoader.load();
-			guiController.loadFirstScene();
+			guiController.loadCreateTable();
 			Scene scene = new Scene(root);
 			primaryStage.setScene(scene);
 			primaryStage.setTitle("Connected minimal automata");

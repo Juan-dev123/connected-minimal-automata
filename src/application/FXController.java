@@ -101,6 +101,12 @@ public class FXController {
     @FXML
     private Button btnFindMooreAutomata;
     
+    @FXML
+    private Label lbFinalTable;
+    
+    @FXML
+    private TableView<State> tvFinalTable;
+    
     private ObservableList<InputSymbol> inputSymbols;
     
     private ObservableList<OutputSymbol> outputSymbols;
@@ -161,7 +167,43 @@ public class FXController {
         tvAutomatonTable.setItems(states);
 	}
 	
-	public void createMooreTable() {
+	public void createMooreTableWithData(List<List<String>> list) {
+		List<TableColumn<State, String>> tables = new ArrayList<>();
+		TableColumn<State, String> tempColumn = new TableColumn<State, String>("State");
+		tempColumn.setCellValueFactory(createArrayValueFactory(State::getData, 0));
+		tables.add(tempColumn);
+		
+		int cont;
+		for(cont = 0; cont < inputSymbols.size(); cont++) {
+			tables.add(new TableColumn<State, String>(inputSymbols.get(cont).getSymbol()));
+			TableColumn<State, String> tempState = new TableColumn<State, String>("State");
+			tempState.setCellValueFactory(createArrayValueFactory(State::getData, cont+1));
+			tables.get(cont+1).getColumns().addAll(tempState);
+		}
+		
+		tables.add(new TableColumn<State, String>(""));
+		TableColumn<State, String> tempOutput = new TableColumn<State, String>("Output");
+		tempOutput.setCellValueFactory(createArrayValueFactory(State::getData, cont+1));
+		tables.get(tables.size()-1).getColumns().addAll(tempOutput);
+		
+		List<State> listStates = new ArrayList<State>();
+		states = FXCollections.observableArrayList(listStates);
+		for(int i = 0; i < list.size(); i++) {
+			String[] row = new String[inputSymbols.size()+2];
+			for(int j = 0, k = 0; j < list.get(0).size(); j+=2, k++) {
+				row[k] = list.get(i).get(j);
+			}	
+			row[row.length-1] = list.get(i).get(list.get(i).size()-1);
+			states.add(new State(inputSymbols.size(), row));
+		}
+		
+		ObservableList<TableColumn<State, String>> observableList = FXCollections.observableArrayList(tables);
+		tvFinalTable.getColumns().addAll(observableList);
+		tvFinalTable.setItems(states);
+		
+	}
+	
+	private void organizeSceneForMoore() {
 		btnAddMooreState.setDisable(false);
 		btnAddMooreState.setVisible(true);
 		btnFindMooreAutomata.setDisable(false);
@@ -171,7 +213,10 @@ public class FXController {
 		AnchorPane.setLeftAnchor(lbTableTitle, 0.0);
 		AnchorPane.setRightAnchor(lbTableTitle, 0.0);
 		lbTableTitle.setAlignment(Pos.CENTER);
-		
+	}
+	
+	public void createMooreTable() {
+		organizeSceneForMoore();
 		List<TableColumn<State, String>> tables = new ArrayList<>();
 		tables.add(new TableColumn<State, String>("State"));
 		tables.get(0).setCellValueFactory(new PropertyValueFactory<State,String>("name"));
@@ -213,6 +258,21 @@ public class FXController {
 			}
 			mainPanel.setCenter(managerPane);
 		}
+	}
+	
+	public void loadFinalTable(int typeAutomaton, List<List<String>> data) throws IOException {
+		FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("final-table.fxml"));
+		fxmlLoader.setController(this);
+		Parent managerPane = fxmlLoader.load();
+		switch(typeAutomaton) {
+		case 1:
+			//createMealyTable();
+			break;
+		case 2:
+			createMooreTableWithData(data);
+			break;
+		}
+		mainPanel.setCenter(managerPane);
 	}
 	
 	public void loadFirstScene() throws IOException {
@@ -348,7 +408,7 @@ public class FXController {
     private int checkIfStateExists(String nameOfState) {
     	int index = -1;
     	for(int i = 0; i < states.size() && index == -1; i++) {
-    		if(states.get(i).getName().equals(nameOfState)) {
+    		if(states.get(i).getName().equalsIgnoreCase(nameOfState)) {
     			index = i;
     		}
     	}
@@ -433,16 +493,16 @@ public class FXController {
     
 
     @FXML
-    void findMealyAutomata(ActionEvent event) {
+    void findMealyAutomata(ActionEvent event) throws IOException {
     	findMinimalEquivalentAutomata(1);
     }
 
     @FXML
-    void findMooreAutomata(ActionEvent event) {
+    void findMooreAutomata(ActionEvent event) throws IOException {
     	findMinimalEquivalentAutomata(2);
     }
     
-    void findMinimalEquivalentAutomata(int typeAutomaton) {
+    void findMinimalEquivalentAutomata(int typeAutomaton) throws IOException {
     	if(states.size() == 0) {
     		showWarningAlert(null, null, "Enter at least one state");
     	}else if(cbInitialState.getValue() == null) {
@@ -455,16 +515,21 @@ public class FXController {
         		reorganizeState(cbInitialState.getValue());
         		String[] allStates = getStates();
         		String[] allInputSymbols = getInputSymbols();
-        		for(int i = 0; i < allInputSymbols.length; i++) {
-        			System.out.println(inputSymbols.get(i).getSymbol());
-            	}
-        		System.out.println();
         		String[] allOutputSymbols = getOutputSymbols();
         		switch(typeAutomaton) {
         			case 1:
         				break;
         			case 2:
-        				automaton = new Moore(allStates, allInputSymbols, allOutputSymbols, createDataForMoore());
+        				String[][] dataForMoore = createDataForMoore();
+        				automaton = new Moore(allStates, allInputSymbols, allOutputSymbols, dataForMoore);
+        				List<List<String>> reducedAutomaton = automaton.reduceAutomaton();
+        				loadFinalTable(2, reducedAutomaton);
+        				for(int i = 0; i < dataForMoore.length; i++) {
+        					for(int j = 0; j < dataForMoore[i].length; j++) {
+        						System.out.print(dataForMoore[i][j] + " ");
+        					}
+        					System.out.println();
+        				}
         				break;
         		}
         	}
@@ -512,8 +577,12 @@ public class FXController {
     	for(int i = 0; i < states.size(); i++) {
     		State tempState = states.get(i);
     		String[] inputSymAndSta = new String[inputSymbols.size()*2];
+    		
+    		//Fill the array with the states and their respective outputs
     		for(int j = 0, k = 0; j < inputSymAndSta.length; j=j+2, k++) {
-    			inputSymAndSta[j] = inputSymbols.get(j).getSymbol();
+    			//Input symbol
+    			inputSymAndSta[j] = inputSymbols.get(k).getSymbol();
+    			//State
     			inputSymAndSta[j+1] = String.valueOf(checkIfStateExists(tempState.getOutputStates()[k].getText()));
     		}
     		String[] row = new String[(inputSymbols.size()*2)+2];
@@ -521,10 +590,15 @@ public class FXController {
     		for(int j = 1; j <= inputSymAndSta.length; j++) {
     			row[j] = inputSymAndSta[j-1];
     		}
-    		row[row.length-1] = tempState.getOutputStates()[0].getText();
+    		row[row.length-1] = tempState.getOutputSymbols()[0].getValue();
     		data[i] = row;
     	}
     	return data;
+    }
+
+    @FXML
+    void showAdditionalInfo(ActionEvent event) {
+
     }
     
     private String checkOutputStates() {
@@ -578,9 +652,10 @@ public class FXController {
     }
     
     public static class State{
-    	private final SimpleStringProperty name;
+    	private SimpleStringProperty name;
     	private TextField[] outputStates;
     	private ChoiceBox<String>[] outputSymbols;
+    	private String[] data;
     	
     	private State(boolean isMealy, String name, int numOfInputSymbols, ObservableList<OutputSymbol> outputSymbolsP) {
     		this.name = new SimpleStringProperty(name);
@@ -601,7 +676,16 @@ public class FXController {
 				}
 				tempOutputCB.setValue(outputSymbolsP.get(0).getSymbol());
 				outputSymbols[i] = tempOutputCB;
-			}	
+			}
+    	}
+    	
+    	private State(int numOfInputSymbols, String[] dataP) {
+			data = new String[numOfInputSymbols+2];
+			data = dataP;
+    	}
+    	
+    	public String[] getData() {
+    		return data;
     	}
     	
     	public String getName() {
@@ -614,6 +698,16 @@ public class FXController {
     	
     	public ChoiceBox<String>[] getOutputSymbols() {
     		return outputSymbols;
+    	}
+    	
+    	public void disableAll() {
+    		for(int i = 0; i < outputStates.length; i++) { 
+				outputStates[i].setEditable(false);
+				outputStates[i].setDisable(true);
+			}
+    		for(int i = 0; i < outputSymbols.length; i++) { 
+    			outputSymbols[i].setDisable(true);
+			}
     	}
     }
     

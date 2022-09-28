@@ -16,13 +16,19 @@ public class Mealy extends FiniteStateAutomaton{
 	}
 
 	@Override
-	public List<List<String>> findConnectedAutomaton() {
+	protected List<List<String>> findConnectedAutomaton() {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public String[][] reduceAutomaton() {
+	public List<List<String>> reduceAutomaton() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	protected String getInfo() {
 		// TODO Auto-generated method stub
 		return null;
 	}
