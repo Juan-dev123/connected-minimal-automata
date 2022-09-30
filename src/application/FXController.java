@@ -124,21 +124,6 @@ public class FXController {
 		List<State> listStates = new ArrayList<State>();
 		states = FXCollections.observableArrayList(listStates); 
 	}
-	
-    @FXML
-    void nextScene(ActionEvent event) throws IOException {
-    	switch(cbInputData.getValue()) {
-		case "Manually":
-			loadCreateTable();
-			break;
-		case "From txt":
-			
-			break;
-		default:
-			showErrorAlert(null, null, "Something happened, please try it again");
-			break;
-    	}
-    }
 
 	public void createMealyTable() throws IOException {
 		btnAddMealyState.setDisable(false);
@@ -168,12 +153,63 @@ public class FXController {
         tvAutomatonTable.setItems(states);
 	}
 	
-	public void createMooreTableWithData(List<List<String>> list) {
-		lbFinalTable.setText("Moore Automaton");
+	private void setLabelOfFinalState(String text) {
+		lbFinalTable.setText(text);
 		lbFinalTable.setMaxWidth(Double.MAX_VALUE);
 		AnchorPane.setLeftAnchor(lbFinalTable, 0.0);
 		AnchorPane.setRightAnchor(lbFinalTable, 0.0);
 		lbFinalTable.setAlignment(Pos.CENTER);
+	}
+	
+	/**
+	 * <b>pre: </b> There is at least one state, one input symbol and one output symbol in the list, this means that the size of the list is greater than or equal to 4 <br>
+	 * @param list
+	 */
+	public void createMealyTableWithData(List<List<String>> list) {
+		setLabelOfFinalState("Mealy Automaton");
+		List<TableColumn<State, String>> tables = new ArrayList<>();
+		TableColumn<State, String> tempColumn = new TableColumn<State, String>("State");
+		tempColumn.setCellValueFactory(createArrayValueFactory(State::getData, 0));
+		tables.add(tempColumn);
+		
+		for(int cont = 0, i = 1; cont < inputSymbols.size(); cont++, i += 2) {
+			tables.add(new TableColumn<State, String>(inputSymbols.get(cont).getSymbol()));
+			TableColumn<State, String> tempState = new TableColumn<State, String>("State");
+			tempState.setCellValueFactory(createArrayValueFactory(State::getData, i));
+			TableColumn<State, String> tempOutput = new TableColumn<State, String>("Output");
+			tempOutput.setCellValueFactory(createArrayValueFactory(State::getData, i+1));
+			tables.get(cont+1).getColumns().addAll(tempState, tempOutput);
+		}
+		
+		for(int i = 0; i < list.size(); i++) {
+			for(int j = 0; j < list.get(i).size(); j++) {
+				System.out.print(list.get(i).get(j));
+			}
+			System.out.println();
+		}
+		System.out.println();
+		
+		
+		List<State> listStates = new ArrayList<State>();
+		states = FXCollections.observableArrayList(listStates);
+		for(int i = 0; i < list.size(); i++) {
+			String[] row = new String[(inputSymbols.size()*3)+1];
+			row[0] = list.get(i).get(0);
+			for(int j = 3, k = 1; j < list.get(i).size(); j += 3, k += 2) {
+				row[k] = list.get(i).get(j);
+				row[k+1] = list.get(i).get(j-1);
+			}
+			states.add(new State(inputSymbols.size(), row));
+		}
+		
+		ObservableList<TableColumn<State, String>> observableList = FXCollections.observableArrayList(tables);
+		tvFinalTable.getColumns().addAll(observableList);
+		tvFinalTable.setItems(states);
+		
+	}
+	
+	public void createMooreTableWithData(List<List<String>> list) {
+		setLabelOfFinalState("Moore Automaton");
 		
 		List<TableColumn<State, String>> tables = new ArrayList<>();
 		TableColumn<State, String> tempColumn = new TableColumn<State, String>("State");
@@ -273,7 +309,7 @@ public class FXController {
 		Parent managerPane = fxmlLoader.load();
 		switch(typeAutomaton) {
 		case 1:
-			//createMealyTable();
+			createMealyTableWithData(data);
 			break;
 		case 2:
 			createMooreTableWithData(data);
@@ -520,15 +556,7 @@ public class FXController {
         				String[][] dataForMealy = createDataForMealy();
         				automaton = new Mealy(allStates, allInputSymbols, allOutputSymbols, dataForMealy);
         				List<List<String>> reducedAutomatonMe = automaton.reduceAutomaton();
-        				/**
-        				for(int i = 0; i < dataForMealy.length; i++) {
-        					for(int j = 0; j < dataForMealy[i].length; j++) {
-        						System.out.print(dataForMealy[i][j] + " ");
-        					}
-        					System.out.println();
-        				}
-        				System.out.println();**/
-        				
+        				loadFinalTable(1, reducedAutomatonMe);
         				break;
         			case 2:
         				String[][] dataForMoore = createDataForMoore();
