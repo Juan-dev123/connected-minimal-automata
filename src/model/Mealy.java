@@ -27,10 +27,4 @@ public class Mealy extends FiniteStateAutomaton{
 		return null;
 	}
 
-	@Override
-	protected String getInfo() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
 }

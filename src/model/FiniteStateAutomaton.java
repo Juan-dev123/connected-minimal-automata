@@ -9,10 +9,13 @@ import java.util.List;
 
 public abstract class FiniteStateAutomaton {
 	private String[] states;
+	private int[] newStates;
 	private String[] inputSymbols;
 	private String[] outputSymbols;
 	private String[][] data; //indices 
 	private int[] accessibleStates;
+	private int[] indexOfPartitions;
+	String info;
 	
 	public FiniteStateAutomaton(String[] states, String[] inputSymbols, String[] outputSymbols, String [][] data) {
 		this.states = states;
@@ -21,6 +24,9 @@ public abstract class FiniteStateAutomaton {
 		accessibleStates = new int[states.length];
 		accessibleStates[0] = 1;
 		this.data = data;
+		indexOfPartitions = new int[states.length];
+		newStates = new int[states.length];
+		info = "";
 	}
 	
 	
@@ -31,8 +37,6 @@ public abstract class FiniteStateAutomaton {
 	protected abstract List<List<String>> findConnectedAutomaton();	
 	
 	public abstract List<List<String>> reduceAutomaton();
-
-	protected abstract String getInfo();
 	
 	public String[] getStates() {
 		return states;
@@ -55,6 +59,22 @@ public abstract class FiniteStateAutomaton {
 
 	public int[] getAccessibleStates() {
 		return accessibleStates;
+	}
+	
+	public int[] getIndexOfPartitions() {
+		return indexOfPartitions;
+	}
+	
+	public int[] getNewStates() {
+		return newStates;
+	}
+	
+	public String getInfo() {
+		return info;
+	}
+	
+	protected void setInfo(String infoP) {
+		info = infoP;
 	}
 
 }

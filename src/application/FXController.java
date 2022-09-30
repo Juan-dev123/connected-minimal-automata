@@ -168,6 +168,12 @@ public class FXController {
 	}
 	
 	public void createMooreTableWithData(List<List<String>> list) {
+		lbFinalTable.setText("Moore Automaton");
+		lbFinalTable.setMaxWidth(Double.MAX_VALUE);
+		AnchorPane.setLeftAnchor(lbFinalTable, 0.0);
+		AnchorPane.setRightAnchor(lbFinalTable, 0.0);
+		lbFinalTable.setAlignment(Pos.CENTER);
+		
 		List<TableColumn<State, String>> tables = new ArrayList<>();
 		TableColumn<State, String> tempColumn = new TableColumn<State, String>("State");
 		tempColumn.setCellValueFactory(createArrayValueFactory(State::getData, 0));
@@ -524,12 +530,6 @@ public class FXController {
         				automaton = new Moore(allStates, allInputSymbols, allOutputSymbols, dataForMoore);
         				List<List<String>> reducedAutomaton = automaton.reduceAutomaton();
         				loadFinalTable(2, reducedAutomaton);
-        				for(int i = 0; i < dataForMoore.length; i++) {
-        					for(int j = 0; j < dataForMoore[i].length; j++) {
-        						System.out.print(dataForMoore[i][j] + " ");
-        					}
-        					System.out.println();
-        				}
         				break;
         		}
         	}
@@ -598,7 +598,7 @@ public class FXController {
 
     @FXML
     void showAdditionalInfo(ActionEvent event) {
-
+    	showInformationAlert(null, null, automaton.getInfo());
     }
     
     private String checkOutputStates() {
