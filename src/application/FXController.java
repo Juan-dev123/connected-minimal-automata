@@ -29,6 +29,7 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.util.Callback;
 import model.FiniteStateAutomaton;
+import model.Mealy;
 import model.Moore;
 
 public class FXController {
@@ -291,10 +292,6 @@ public class FXController {
 		mainPanel.setCenter(managerPane);
 	}
 	
-	public void loadFromText() {
-		
-	}
-	
 	public void loadCreateTable() throws IOException {
 		FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("create-table.fxml"));
 		fxmlLoader.setController(this);
@@ -354,30 +351,10 @@ public class FXController {
     	states = FXCollections.observableArrayList(listStates); 
     	loadCreateTable();
     }
-
-    @FXML
-    void continueToMealy(ActionEvent event) {
-
-    }
-
-    @FXML
-    void continueToMoore(ActionEvent event) {
-
-    }
-    
-    @FXML
-    void deleteStimulus(ActionEvent event) {
-
-    }
     
     @FXML
     void backToFirstScene(ActionEvent event) throws IOException {
     	loadFirstScene();
-    }
-
-    @FXML
-    void openFile(ActionEvent event) {
-
     }
     
     @FXML
@@ -476,25 +453,41 @@ public class FXController {
     	return isEmpty;
     }
     
+    @FXML
+    void deleteState(ActionEvent event) {
+    	if(tvAutomatonTable.getSelectionModel().getSelectedItems().size() == 0) {
+    		showWarningAlert(null, null, "Select the state you want to delete");
+    	}else {
+        	State stateToRemove = tvAutomatonTable.getSelectionModel().getSelectedItems().get(0);
+        	cbInitialState.setValue(null);
+        	cbInitialState.getItems().remove(stateToRemove.getName());
+        	
+        	tvAutomatonTable.getItems().removeAll(
+        			tvAutomatonTable.getSelectionModel().getSelectedItems()
+            );
+    	}
+    }
 
     @FXML
     void deleteInputSymbol(ActionEvent event) {
     	if(tvInputSymbols.getSelectionModel().getSelectedItems().size() == 0) {
     		showWarningAlert(null, null, "Select the input symbol you want to delete");
+    	}else {
+        	tvInputSymbols.getItems().removeAll(
+        			tvInputSymbols.getSelectionModel().getSelectedItems()
+            );
     	}
-    	tvInputSymbols.getItems().removeAll(
-    			tvInputSymbols.getSelectionModel().getSelectedItems()
-        );
     }
 
     @FXML
     void deleteOutputSymbol(ActionEvent event) {
     	if(tvOutputSymbols.getSelectionModel().getSelectedItems().size() == 0) {
     		showWarningAlert(null, null, "Select the output symbol you want to delete");
+    	}else {
+        	tvOutputSymbols.getItems().removeAll(
+        			tvOutputSymbols.getSelectionModel().getSelectedItems()
+            );
     	}
-    	tvOutputSymbols.getItems().removeAll(
-    			tvOutputSymbols.getSelectionModel().getSelectedItems()
-        );
     }
     
 
@@ -524,12 +517,24 @@ public class FXController {
         		String[] allOutputSymbols = getOutputSymbols();
         		switch(typeAutomaton) {
         			case 1:
+        				String[][] dataForMealy = createDataForMealy();
+        				automaton = new Mealy(allStates, allInputSymbols, allOutputSymbols, dataForMealy);
+        				List<List<String>> reducedAutomatonMe = automaton.reduceAutomaton();
+        				/**
+        				for(int i = 0; i < dataForMealy.length; i++) {
+        					for(int j = 0; j < dataForMealy[i].length; j++) {
+        						System.out.print(dataForMealy[i][j] + " ");
+        					}
+        					System.out.println();
+        				}
+        				System.out.println();**/
+        				
         				break;
         			case 2:
         				String[][] dataForMoore = createDataForMoore();
         				automaton = new Moore(allStates, allInputSymbols, allOutputSymbols, dataForMoore);
-        				List<List<String>> reducedAutomaton = automaton.reduceAutomaton();
-        				loadFinalTable(2, reducedAutomaton);
+        				List<List<String>> reducedAutomatonMo = automaton.reduceAutomaton();
+        				loadFinalTable(2, reducedAutomatonMo);
         				break;
         		}
         	}
@@ -591,6 +596,26 @@ public class FXController {
     			row[j] = inputSymAndSta[j-1];
     		}
     		row[row.length-1] = tempState.getOutputSymbols()[0].getValue();
+    		data[i] = row;
+    	}
+    	return data;
+    }
+    
+    private String[][] createDataForMealy(){
+    	String[][] data = new String[states.size()][(inputSymbols.size()*3)+1];
+    	for(int i = 0; i < states.size(); i++) {
+    		State tempState = states.get(i);
+    		String[] row = new String[(inputSymbols.size()*3)+1];
+    		row[0] = String.valueOf(i);;
+    		//Fill the array with the input symbols, output symbols and states 
+    		for(int j = 1, k = 0; j < row.length; j = j+3, k++) {
+    			//Input symbol
+    			row[j] = inputSymbols.get(k).getSymbol();
+    			//Output symbol
+    			row[j+1] = tempState.getOutputSymbols()[k].getValue();
+    			//State
+    			row[j+2] = String.valueOf(checkIfStateExists(tempState.getOutputStates()[k].getText()));
+    		}
     		data[i] = row;
     	}
     	return data;
