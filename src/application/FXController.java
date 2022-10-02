@@ -189,15 +189,6 @@ public class FXController {
 			tables.get(cont+1).getColumns().addAll(tempState, tempOutput);
 		}
 		
-		for(int i = 0; i < list.size(); i++) {
-			for(int j = 0; j < list.get(i).size(); j++) {
-				System.out.print(list.get(i).get(j));
-			}
-			System.out.println();
-		}
-		System.out.println();
-		
-		
 		List<State> listStates = new ArrayList<State>();
 		states = FXCollections.observableArrayList(listStates);
 		for(int i = 0; i < list.size(); i++) {

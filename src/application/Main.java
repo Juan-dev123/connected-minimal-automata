@@ -7,6 +7,7 @@ import javafx.stage.Stage;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.ChoiceBox;
+import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
 
 
@@ -37,6 +38,7 @@ public class Main extends Application {
 			root = fxmlLoader.load();
 			guiController.loadCreateTable();
 			Scene scene = new Scene(root);
+			primaryStage.getIcons().add(new Image(Main.class.getResourceAsStream("sigma.png")));
 			primaryStage.setScene(scene);
 			primaryStage.setTitle("Connected minimal automata");
 			primaryStage.show();
