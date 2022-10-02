@@ -40,7 +40,7 @@ public class Main extends Application {
 			Scene scene = new Scene(root);
 			primaryStage.getIcons().add(new Image(Main.class.getResourceAsStream("sigma.png")));
 			primaryStage.setScene(scene);
-			primaryStage.setTitle("Connected minimal automata");
+			primaryStage.setTitle("Connected minimal automaton");
 			primaryStage.show();
 		} catch(Exception e) {
 			e.printStackTrace();
