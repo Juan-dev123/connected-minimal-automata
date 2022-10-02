@@ -13,7 +13,7 @@
          <font>
             <Font name="System Bold" size="26.0" />
          </font></Label>
-      <Button layoutX="584.0" layoutY="528.0" mnemonicParsing="false" onAction="#showAdditionalInfo" text="Show Additional Info" />
+      <Button layoutX="537.0" layoutY="528.0" mnemonicParsing="false" onAction="#showAdditionalInfo" text="Show Additional Information" />
       <Button layoutX="70.0" layoutY="528.0" mnemonicParsing="false" onAction="#backToCreateTable" text="Back" />
    </children>
 </AnchorPane>

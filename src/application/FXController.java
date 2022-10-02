@@ -434,6 +434,26 @@ public class FXController {
     	return index;
     }
     
+    private int getIndexOfInputSymbol(String inputSymbol) {
+    	int index = -1;
+    	for(int i = 0; i < inputSymbols.size() && index == -1; i++) {
+    		if(inputSymbols.get(i).equals(inputSymbol)) {
+    			index = i;
+    		}
+    	}
+    	return index;
+    }
+    
+    private int getIndexOfOutputSymbol(String outputSymbol) {
+    	int index = -1;
+    	for(int i = 0; i < outputSymbols.size() && index == -1; i++) {
+    		if(outputSymbols.get(i).equals(outputSymbol)) {
+    			index = i;
+    		}
+    	}
+    	return index;
+    }
+    
     @FXML
     void addInputSymbol(ActionEvent event) {
     	String tempSymbol = tfInputSymbol.getText();
