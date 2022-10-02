@@ -38,12 +38,6 @@ public class FXController {
 	
     @FXML
     private BorderPane mainPanel;
-    
-	@FXML
-    private ChoiceBox<?> cbResponse;
-
-    @FXML
-    private ChoiceBox<?> cbState;
 
     @FXML
     private TextField txStatus;
@@ -53,12 +47,6 @@ public class FXController {
 
     @FXML
     private Button btnToMoore;
-    
-    @FXML
-    private Button btnBackFirstScene;
-    
-    @FXML
-    private ChoiceBox<String> cbInputData;
     
     @FXML
     private TableColumn<InputSymbol, String> colInputSymbols;
@@ -125,6 +113,7 @@ public class FXController {
 		states = FXCollections.observableArrayList(listStates); 
 	}
 
+	@SuppressWarnings("unchecked")
 	public void createMealyTable() throws IOException {
 		btnAddMealyState.setDisable(false);
 		btnAddMealyState.setVisible(true);
@@ -165,6 +154,7 @@ public class FXController {
 	 * <b>pre: </b> There is at least one state, one input symbol and one output symbol in the list, this means that the size of the list is greater than or equal to 4 <br>
 	 * @param list
 	 */
+	@SuppressWarnings("unchecked")
 	public void createMealyTableWithData(List<List<String>> list) {
 		setLabelOfFinalState("Mealy Automaton");
 		List<TableColumn<State, String>> tables = new ArrayList<>();
@@ -208,6 +198,7 @@ public class FXController {
 		
 	}
 	
+	@SuppressWarnings("unchecked")
 	public void createMooreTableWithData(List<List<String>> list) {
 		setLabelOfFinalState("Moore Automaton");
 		
@@ -258,6 +249,7 @@ public class FXController {
 		lbTableTitle.setAlignment(Pos.CENTER);
 	}
 	
+	@SuppressWarnings("unchecked")
 	public void createMooreTable() {
 		organizeSceneForMoore();
 		List<TableColumn<State, String>> tables = new ArrayList<>();
@@ -315,16 +307,6 @@ public class FXController {
 			createMooreTableWithData(data);
 			break;
 		}
-		mainPanel.setCenter(managerPane);
-	}
-	
-	public void loadFirstScene() throws IOException {
-		FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("first-scene.fxml"));
-		fxmlLoader.setController(this);
-		Parent managerPane = fxmlLoader.load();
-		cbInputData.getItems().add("Manually");
-		cbInputData.getItems().add("From txt");
-		cbInputData.setValue("Manually");
 		mainPanel.setCenter(managerPane);
 	}
 	
@@ -389,11 +371,6 @@ public class FXController {
     }
     
     @FXML
-    void backToFirstScene(ActionEvent event) throws IOException {
-    	loadFirstScene();
-    }
-    
-    @FXML
     void addMealyState(ActionEvent event) {
     	addState(1);
     }
@@ -428,26 +405,6 @@ public class FXController {
     	int index = -1;
     	for(int i = 0; i < states.size() && index == -1; i++) {
     		if(states.get(i).getName().equalsIgnoreCase(nameOfState)) {
-    			index = i;
-    		}
-    	}
-    	return index;
-    }
-    
-    private int getIndexOfInputSymbol(String inputSymbol) {
-    	int index = -1;
-    	for(int i = 0; i < inputSymbols.size() && index == -1; i++) {
-    		if(inputSymbols.get(i).equals(inputSymbol)) {
-    			index = i;
-    		}
-    	}
-    	return index;
-    }
-    
-    private int getIndexOfOutputSymbol(String outputSymbol) {
-    	int index = -1;
-    	for(int i = 0; i < outputSymbols.size() && index == -1; i++) {
-    		if(outputSymbols.get(i).equals(outputSymbol)) {
     			index = i;
     		}
     	}
@@ -730,7 +687,8 @@ public class FXController {
     	private ChoiceBox<String>[] outputSymbols;
     	private String[] data;
     	
-    	private State(boolean isMealy, String name, int numOfInputSymbols, ObservableList<OutputSymbol> outputSymbolsP) {
+    	@SuppressWarnings("unchecked")
+		private State(boolean isMealy, String name, int numOfInputSymbols, ObservableList<OutputSymbol> outputSymbolsP) {
     		this.name = new SimpleStringProperty(name);
     		outputStates = new TextField[numOfInputSymbols];
     		if(isMealy) {
