@@ -10,14 +10,24 @@ import javafx.scene.control.ChoiceBox;
 import javafx.scene.layout.BorderPane;
 
 
+/**
+ * @author Juan-dev123
+ *
+ */
 public class Main extends Application {
 	
 	private FXController guiController;
 	
+	/**
+	 * The constructor method of the Main class <br>
+	 */
 	public Main() {
 		guiController = new FXController();
 	}
 	
+	/**
+	 * Starts the GUI
+	 */
 	@Override
 	public void start(Stage primaryStage) {
 		FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("white-scene.fxml"));
@@ -35,6 +45,9 @@ public class Main extends Application {
 		}
 	}
 	
+	/**
+	 * @param args The command line parameters
+	 */
 	public static void main(String[] args) {
 		launch(args);
 	}
